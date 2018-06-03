@@ -16,8 +16,8 @@ cu_ran_dir_3d_double(curandState *r, double *x, double *y, double *z)
    */
   do
     {
-      *x = -1 + 2 * curand_uniform(&r);
-      *y = -1 + 2 * curand_uniform(&r);
+      *x = -1 + 2 * curand_uniform(r);
+      *y = -1 + 2 * curand_uniform(r);
       s = (*x) * (*x) + (*y) * (*y);
     }
   while (s > 1.0);
