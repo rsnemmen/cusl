@@ -2,7 +2,7 @@
    Line, 65-91
 */
 __device__ void
-cu_ran_dir_3d_double (curandState *r, double *x, double *y, double *z)
+cu_ran_dir_3d_double(curandState *r, double *x, double *y, double *z)
 {
   double s, a;
 
