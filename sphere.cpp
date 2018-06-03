@@ -1,5 +1,8 @@
-void
-gsl_ran_dir_3d (const gsl_rng * r, double *x, double *y, double *z)
+/* Taken from https://github.com/ampl/gsl/blob/48fbd40c7c9c24913a68251d23bdbd0637bbda20/randist/sphere.c
+   Line, 65-91
+*/
+__device__ void
+cu_ran_dir_3d_double (curandState *r, double *x, double *y, double *z)
 {
   double s, a;
 
@@ -13,8 +16,8 @@ gsl_ran_dir_3d (const gsl_rng * r, double *x, double *y, double *z)
    */
   do
     {
-      *x = -1 + 2 * gsl_rng_uniform (r);
-      *y = -1 + 2 * gsl_rng_uniform (r);
+      *x = -1 + 2 * curand_uniform(&r);
+      *y = -1 + 2 * curand_uniform(&r);
       s = (*x) * (*x) + (*y) * (*y);
     }
   while (s > 1.0);
@@ -25,3 +28,5 @@ gsl_ran_dir_3d (const gsl_rng * r, double *x, double *y, double *z)
   *x *= a;
   *y *= a;
 }
+
+
