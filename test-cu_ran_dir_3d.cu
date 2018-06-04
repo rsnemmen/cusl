@@ -37,7 +37,12 @@ __global__ void generate(curandState *state, int n){
 
 int main(int argc, char *argv[]){
 	int n, onethread;
-	curandState *d_states ;
+	/* A note about RNGs:
+
+	   • use curandState if you want to use the default XORWOW generator
+	   • use curandStateMRG32k3a if you want to use the Mersenne Twister
+	*/
+	curandState *d_states ; // XORWOW
 
     // handle command-line argument
     if ( argc != 3 ) {
@@ -51,12 +56,13 @@ int main(int argc, char *argv[]){
 	/* Allocate space for prng states on device */
     cudaMalloc((void **)&d_states , n*sizeof(curandState));
 
+    printf("Generating RNs on the GPU, ");
     if (onethread) {
-		printf("Using only one thread\n");
+		printf("one thread\n");
 		generate<<<1,1>>>(d_states, n); 	
 	}
 	else {
-		printf("Using multiple GPU threads\n");
+		printf("multiple threads\n");
 		generate<<<(n+TPB-1)/TPB, TPB>>>(d_states, n); 
 	}
 	

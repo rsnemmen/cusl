@@ -18,17 +18,27 @@ void test_dir3d(gsl_rng *r, int n);
 
 int main(int argc, char const *argv[])
 {
+	int n;
 	gsl_rng *r;
 
+    // handle command-line argument
+    if ( argc != 2 ) {
+        printf( "usage: %s <number of randoms desired> \n", argv[0] );
+        exit(0);
+    }  
+    // n = number of random numbers (and threads)
+    sscanf(argv[1], "%d", &n); 
+
 	// define RNG type
-	r = gsl_rng_alloc(gsl_rng_mt19937);	/* use Mersenne twister */
-	//r = gsl_rng_alloc (gsl_rng_default);
+	//r = gsl_rng_alloc(gsl_rng_mt19937);	/* use Mersenne twister */
+	r = gsl_rng_alloc(gsl_rng_default);
 
 	// initialize RNG
 	gsl_rng_set(r, SEED);
 
 	// generates n random numbers
-	test_dir3d(r, 10);
+	printf("Generating RNs on the CPU with GSL:\n");
+	test_dir3d(r, n);
 
 	return 0;
 }
