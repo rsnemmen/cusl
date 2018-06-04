@@ -4,11 +4,26 @@
    Currently the CUDA implementation only supports order 2<=n<=5.
 
    Adapted from https://github.com/ampl/gsl/blob/48fbd40c7c9c24913a68251d23bdbd0637bbda20/specfunc/bessel_Kn.c
+*/
 
 
+
+
+/* evaluate a function discarding the status value in a modifiable way */
+
+// #define EVAL_RESULT(fn) \
+//    gsl_sf_result result; \
+//    int status = fn; \
+//    if (status != GSL_SUCCESS) { \
+//      GSL_ERROR_VAL(#fn, status, result.val); \
+//    } ; \
+// return result.val;
+
+
+/*
    [Abramowitz+Stegun, 9.6.11]
    assumes n >= 1
- */
+*/
 __device__ static
 int bessel_Kn_scaled_small_x(const int n, const double x, gsl_sf_result * result)
 {
@@ -126,9 +141,8 @@ int gsl_sf_bessel_Kn_scaled_e(int n, const double x, gsl_sf_result * result)
 
 
 __device__
-int gsl_sf_bessel_Kn_e(const int n, const double x, gsl_sf_result * result)
+int gsl_sf_bessel_Kn_e(const int n, const double x, double result)
 {
-  const int status = gsl_sf_bessel_Kn_scaled_e(n, x, result);
   const double ex = exp(-x);
   result->val *= ex;
   result->err *= ex;
@@ -141,4 +155,10 @@ __device__
 double gsl_sf_bessel_Kn_scaled(const int n, const double x)
 {
   EVAL_RESULT(gsl_sf_bessel_Kn_scaled_e(n, x, &result));
+}
+
+
+double gsl_sf_bessel_Kn(const int n, const double x)
+{
+  EVAL_RESULT(gsl_sf_bessel_Kn_e(n, x, &result));
 }
