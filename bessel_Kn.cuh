@@ -9,9 +9,8 @@
    [Abramowitz+Stegun, 9.6.11]
    assumes n >= 1
  */
-static
-int
-bessel_Kn_scaled_small_x(const int n, const double x, gsl_sf_result * result)
+__device__ static
+int bessel_Kn_scaled_small_x(const int n, const double x, gsl_sf_result * result)
 {
   int k;
   double y = 0.25 * x * x;
@@ -74,7 +73,7 @@ bessel_Kn_scaled_small_x(const int n, const double x, gsl_sf_result * result)
 
 
 
-
+__device__
 int gsl_sf_bessel_Kn_scaled_e(int n, const double x, gsl_sf_result * result)
 {
   n = abs(n); /* K(-n, z) = K(n, z) */
@@ -126,6 +125,7 @@ int gsl_sf_bessel_Kn_scaled_e(int n, const double x, gsl_sf_result * result)
 }
 
 
+__device__
 int gsl_sf_bessel_Kn_e(const int n, const double x, gsl_sf_result * result)
 {
   const int status = gsl_sf_bessel_Kn_scaled_e(n, x, result);
@@ -137,6 +137,7 @@ int gsl_sf_bessel_Kn_e(const int n, const double x, gsl_sf_result * result)
 }
 
 
+__device__
 double gsl_sf_bessel_Kn_scaled(const int n, const double x)
 {
   EVAL_RESULT(gsl_sf_bessel_Kn_scaled_e(n, x, &result));

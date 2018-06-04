@@ -11,4 +11,10 @@ cuRAND
 
 - [x] gsl_ran_dir_3d => sphere.cuh/cu_ran_dir_3d
 - [ ] gsl_sf_bessel_Kn
-- [ ] gsl_ran_chisq
+- [x] gsl_ran_chisq
+
+# Work needed: TODO
+
+- [ ] need test of cu_ran_dir_3d (partially done)
+- [ ] test cu_sf_bessel_Kn
+- [ ] test cu_ran_chisq
