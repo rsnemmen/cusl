@@ -9,6 +9,6 @@ cuRAND
 
 # Available functions
 
-- [ ] gsl_ran_dir_3d
+- [x] gsl_ran_dir_3d => sphere.cuh/cu_ran_dir_3d
 - [ ] gsl_sf_bessel_Kn
 - [ ] gsl_ran_chisq
