@@ -8,6 +8,6 @@
 __device__
 double cu_ran_chisq_double(curandState *r, const double nu)
 {
-  double chisq = 2 * cu_ran_gamma (r, nu / 2, 1.0);
+  double chisq = 2 * cu_ran_gamma_double(r, nu / 2, 1.0);
   return chisq;
 }

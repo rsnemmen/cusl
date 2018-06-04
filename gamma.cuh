@@ -14,7 +14,7 @@ double cu_ran_gamma_double(curandState *r, const double a, const double b){
 
 if (a < 1){
     double u = curand_uniform_double(r);
-    return ran_gamma (r, 1.0 + a, b) * pow (u, 1.0 / a);
+    return cu_ran_gamma_double(r, 1.0 + a, b) * pow (u, 1.0 / a);
 }
 
 {
