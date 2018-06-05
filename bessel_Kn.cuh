@@ -25,13 +25,13 @@
    assumes n >= 1
 */
 __device__ static
-int bessel_Kn_scaled_small_x(const int n, const double x, gsl_sf_result * result)
+int bessel_Kn_scaled_small_x(const int n, const double x, result)
 {
   int k;
   double y = 0.25 * x * x;
   double ln_x_2 = log(0.5*x);
   double ex = exp(x);
-  gsl_sf_result ln_nm1_fact;
+  double ln_nm1_fact;
   double k_term;
   double term1, sum1, ln_pre1;
   double term2, sum2, pre2;
@@ -140,25 +140,91 @@ int gsl_sf_bessel_Kn_scaled_e(int n, const double x, gsl_sf_result * result)
 }
 
 
+// __device__
+// int gsl_sf_bessel_Kn_e(const int n, const double x, double result)
+// {
+//   const double ex = exp(-x);
+//   result->val *= ex;
+//   result->err *= ex;
+//   result->err += x * GSL_DBL_EPSILON * fabs(result->val);
+//   return status;
+// }
+
+
+// __device__
+// double gsl_sf_bessel_Kn_scaled(const int n, const double x)
+// {
+//   EVAL_RESULT(gsl_sf_bessel_Kn_scaled_e(n, x, &result));
+// }
+
+
+/*
+  result.val (GSL) => result (CUSL)
+*/
 __device__
-int gsl_sf_bessel_Kn_e(const int n, const double x, double result)
+double cu_sf_bessel_Kn(const int n, const double x)
 {
-  const double ex = exp(-x);
-  result->val *= ex;
-  result->err *= ex;
-  result->err += x * GSL_DBL_EPSILON * fabs(result->val);
-  return status;
-}
+	//EVAL_RESULT(gsl_sf_bessel_Kn_e(n, x, &result));
+	//const int status = gsl_sf_bessel_Kn_scaled_e(n, x, result);
 
+	n = abs(n); /* K(-n, z) = K(n, z) */
 
-__device__
-double gsl_sf_bessel_Kn_scaled(const int n, const double x)
-{
-  EVAL_RESULT(gsl_sf_bessel_Kn_scaled_e(n, x, &result));
-}
+	/* CHECK_POINTER(result) */
 
+	if(x <= 0.0) {
+		printf("Invalid x for Bessel\n");
+	  	return; 
+	}
+	else if(n == 0) {
+		printf("n=0 not yet supported in CUDA Bessel\n");
+	  	//return gsl_sf_bessel_K0_scaled_e(x, result);
+	  	return;
+	}
+	else if(n == 1) {
+		printf("n=1 not yet supported in CUDA Bessel\n");	
+	  	//return gsl_sf_bessel_K1_scaled_e(x, result);
+	  	return;
+	}
+	else if(x <= 5.0) {
+	  result=bessel_Kn_scaled_small_x(n, x);
+	}
+	else if(GSL_ROOT3_DBL_EPSILON * x > 0.25 * (n*n + 1)) {
+	  return gsl_sf_bessel_Knu_scaled_asympx_e((double)n, x, result);
+	}
+	else if(GSL_MIN(0.29/(n*n), 0.5/(n*n + x*x)) < GSL_ROOT3_DBL_EPSILON) {
+	  return gsl_sf_bessel_Knu_scaled_asymp_unif_e((double)n, x, result);
+	}
+	else {
+	  /* Upward recurrence. [Gradshteyn + Ryzhik, 8.471.1] */
+	  double two_over_x = 2.0/x;
+	  gsl_sf_result r_b_jm1;
+	  gsl_sf_result r_b_j;
+	  int stat_0 = gsl_sf_bessel_K0_scaled_e(x, &r_b_jm1);
+	  int stat_1 = gsl_sf_bessel_K1_scaled_e(x, &r_b_j);
+	  double b_jm1 = r_b_jm1.val;
+	  double b_j   = r_b_j.val;
+	  double b_jp1;
+	  int j;
 
-double gsl_sf_bessel_Kn(const int n, const double x)
-{
-  EVAL_RESULT(gsl_sf_bessel_Kn_e(n, x, &result));
+	  for(j=1; j<n; j++) {
+	    b_jp1 = b_jm1 + j * two_over_x * b_j;
+	    b_jm1 = b_j;
+	    b_j   = b_jp1; 
+	  } 
+	  
+	  result->val  = b_j;
+	  result->err  = n * (fabs(b_j) * (fabs(r_b_jm1.err/r_b_jm1.val) + fabs(r_b_j.err/r_b_j.val)));
+	  result->err += 2.0 * GSL_DBL_EPSILON * fabs(result->val);
+
+	  return GSL_ERROR_SELECT_2(stat_0, stat_1);
+	}
+
+	/*
+	===============================================
+	*/
+
+	const double ex = exp(-x);
+	result *= ex;
+
+	return result;
 }
