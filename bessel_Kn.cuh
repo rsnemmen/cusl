@@ -162,10 +162,9 @@ int gsl_sf_bessel_Kn_scaled_e(int n, const double x, gsl_sf_result * result)
   result.val (GSL) => result (CUSL)
 */
 __device__
-double cu_sf_bessel_Kn(const int n, const double x)
+double cu_sf_bessel_Kn(int n, const double x)
 {
-	//EVAL_RESULT(gsl_sf_bessel_Kn_e(n, x, &result));
-	//const int status = gsl_sf_bessel_Kn_scaled_e(n, x, result);
+	double result;
 
 	n = abs(n); /* K(-n, z) = K(n, z) */
 
@@ -177,13 +176,11 @@ double cu_sf_bessel_Kn(const int n, const double x)
 	}
 	else if(n == 0) {
 		printf("n=0 not yet supported in CUDA Bessel\n");
-	  	//return gsl_sf_bessel_K0_scaled_e(x, result);
-	  	return;
+	  	result=gsl_sf_bessel_K0_scaled_e(x);
 	}
 	else if(n == 1) {
 		printf("n=1 not yet supported in CUDA Bessel\n");	
-	  	//return gsl_sf_bessel_K1_scaled_e(x, result);
-	  	return;
+	  	result=gsl_sf_bessel_K1_scaled_e(x);
 	}
 	else if(x <= 5.0) {
 	  result=bessel_Kn_scaled_small_x(n, x);
