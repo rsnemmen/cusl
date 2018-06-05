@@ -6,7 +6,7 @@
    Adapted from https://github.com/ampl/gsl/blob/48fbd40c7c9c24913a68251d23bdbd0637bbda20/specfunc/bessel_Kn.c
 */
 
-
+#include "gsl_machine.h"
 
 
 /* evaluate a function discarding the status value in a modifiable way */
@@ -189,10 +189,10 @@ double cu_sf_bessel_Kn(const int n, const double x)
 	  result=bessel_Kn_scaled_small_x(n, x);
 	}
 	else if(GSL_ROOT3_DBL_EPSILON * x > 0.25 * (n*n + 1)) {
-	  return gsl_sf_bessel_Knu_scaled_asympx_e((double)n, x, result);
+	  result=gsl_sf_bessel_Knu_scaled_asympx_e((double)n, x);
 	}
-	else if(GSL_MIN(0.29/(n*n), 0.5/(n*n + x*x)) < GSL_ROOT3_DBL_EPSILON) {
-	  return gsl_sf_bessel_Knu_scaled_asymp_unif_e((double)n, x, result);
+	else if(fmin(0.29/(n*n), 0.5/(n*n + x*x)) < GSL_ROOT3_DBL_EPSILON) {
+	  result=gsl_sf_bessel_Knu_scaled_asymp_unif_e((double)n, x);
 	}
 	else {
 	  /* Upward recurrence. [Gradshteyn + Ryzhik, 8.471.1] */
