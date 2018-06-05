@@ -197,12 +197,12 @@ double cu_sf_bessel_Kn(const int n, const double x)
 	else {
 	  /* Upward recurrence. [Gradshteyn + Ryzhik, 8.471.1] */
 	  double two_over_x = 2.0/x;
-	  gsl_sf_result r_b_jm1;
-	  gsl_sf_result r_b_j;
-	  int stat_0 = gsl_sf_bessel_K0_scaled_e(x, &r_b_jm1);
-	  int stat_1 = gsl_sf_bessel_K1_scaled_e(x, &r_b_j);
-	  double b_jm1 = r_b_jm1.val;
-	  double b_j   = r_b_j.val;
+	  //gsl_sf_result r_b_jm1;
+	  //gsl_sf_result r_b_j;
+	  double b_jm1 = gsl_sf_bessel_K0_scaled_e(x);
+	  double b_j = gsl_sf_bessel_K1_scaled_e(x);
+	  //double b_jm1 = r_b_jm1.val;
+	  //double b_j   = r_b_j.val;
 	  double b_jp1;
 	  int j;
 
@@ -212,19 +212,14 @@ double cu_sf_bessel_Kn(const int n, const double x)
 	    b_j   = b_jp1; 
 	  } 
 	  
-	  result->val  = b_j;
-	  result->err  = n * (fabs(b_j) * (fabs(r_b_jm1.err/r_b_jm1.val) + fabs(r_b_j.err/r_b_j.val)));
-	  result->err += 2.0 * GSL_DBL_EPSILON * fabs(result->val);
-
-	  return GSL_ERROR_SELECT_2(stat_0, stat_1);
+	  result = b_j;
 	}
 
 	/*
 	===============================================
 	*/
 
-	const double ex = exp(-x);
-	result *= ex;
+	result *= exp(-x);
 
 	return result;
 }

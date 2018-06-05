@@ -15,6 +15,6 @@ cuRAND
 
 # Work needed: TODO
 
-- [ ] need test of cu_ran_dir_3d (partially done)
+- [x] cu_ran_dir_3d (partially done)
 - [ ] test cu_sf_bessel_Kn
 - [ ] test cu_ran_chisq
