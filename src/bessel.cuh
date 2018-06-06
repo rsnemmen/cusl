@@ -1,5 +1,6 @@
 /* These routines compute the irregular modified cylindrical Bessel 
-   function of order n, K_n(x), for x > 0. 
+   function of order n, K_n(x) (or simply the modified Bessel function
+   of the second kind, function BesselK[2,x] in Mathematica), for x > 0. 
 
    Currently the CUDA implementation only supports order 2<=n<=5.
 
@@ -18,6 +19,45 @@
 //      GSL_ERROR_VAL(#fn, status, result.val); \
 //    } ; \
 // return result.val;
+
+
+__device__
+int gsl_sf_bessel_K0_scaled_e(const double x, gsl_sf_result * result)
+{
+  /* CHECK_POINTER(result) */
+
+  if(x <= 0.0) {
+    DOMAIN_ERROR(result);
+  }
+  else if(x < 1.0) {
+    const double lx = log(x);
+    const double ex = exp(x);
+    const double x2 = x*x;
+    result->val  = ex * (gsl_poly_eval(k0_poly,8,x2)-lx*(1.0+0.25*x2*gsl_poly_eval(i0_poly,7,0.25*x2)));
+    result->err  = ex * (1.6+fabs(lx)*0.6) * GSL_DBL_EPSILON;
+    result->err += 2.0 * GSL_DBL_EPSILON * fabs(result->val);
+    return GSL_SUCCESS;
+  }
+  else if(x <= 8.0) {
+    const double sx = sqrt(x);
+    gsl_sf_result c;
+    cheb_eval_e(&ak0_cs, (16.0/x-9.0)/7.0, &c);
+    result->val  = (1.203125 + c.val) / sx; /* 1.203125 = 77/64 */
+    result->err  = c.err / sx;
+    result->err += 2.0 * GSL_DBL_EPSILON * fabs(result->val);
+    return GSL_SUCCESS;
+  }
+  else {
+    const double sx = sqrt(x);
+    gsl_sf_result c;
+    cheb_eval_e(&ak02_cs, 16.0/x-1.0, &c);
+    result->val  = (1.25 + c.val) / sx;
+    result->err  = (c.err + GSL_DBL_EPSILON) / sx;
+    result->err += 2.0 * GSL_DBL_EPSILON * fabs(result->val);
+    return GSL_SUCCESS;
+  } 
+}
+
 
 
 /*
