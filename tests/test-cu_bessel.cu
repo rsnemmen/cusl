@@ -9,43 +9,46 @@
 #define TPB 64  
 
 #define N 100
-#define x0 0.5
-#define x1 3.
+#define x0 0.1
+#define x1 5.
 #define filename "bessel-cuda.dat"
 
 
 
-__global__ void bessel(double *d_x, double *d_y, int n){ 
+__global__ void bessel(double *x, double *y_n, double *i0, double *i1, int n){ 
 	int id = blockIdx.x*blockDim.x + threadIdx.x; 
 
 	if (id>=n) return;
 
-	d_y[id]=yn(2,d_x[id]);
+	y_n[id] =yn(2,x[id]);
+	i0[id] =cyl_bessel_i0(x[id]);
+	i1[id] =cyl_bessel_i1(x[id]);
 }
 
 
 
 int main(int argc, char *argv[]){
 	int i;
-	double *x = (double *)malloc(N*sizeof(double));
-	double *y = (double *)malloc(N*sizeof(double));	
+	double *x, *y_n, *i0, *i1;
+
+	// Allocate Unified Memory – accessible from CPU or GPU
+	cudaMallocManaged(&x, N*sizeof(double));
+	cudaMallocManaged(&y_n, N*sizeof(double));	
+	cudaMallocManaged(&i0, N*sizeof(double));	
+	cudaMallocManaged(&i1, N*sizeof(double));	
 
 	for (i=0; i<N; i++) {
 		// generate array of x-values
 		x[i]=x0+i*(x1-x0)/(N-1);
 	}	
 
-	// send to GPU
-	double *d_x, *d_y;
-	cudaMalloc(&d_x, N*sizeof(double));	
-	cudaMalloc(&d_y, N*sizeof(double));	
-	cudaMemcpy(d_x, x, N*sizeof(double), cudaMemcpyHostToDevice);
-
 	// kernel launch
     printf("Computing Bessel function on the GPU\n");
-	bessel<<<(N+TPB-1)/TPB, TPB>>>(d_x, d_y, N); 
-	cudaMemcpy(y, d_y, N*sizeof(double), cudaMemcpyDeviceToHost);	
+	bessel<<<(N+TPB-1)/TPB, TPB>>>(x, y_n, i0, i1, N); 
 	
+	// Wait for GPU to finish before accessing on host
+	cudaDeviceSynchronize();
+
 	// write file
 	printf("Saving file %s\n", filename);
     FILE *f = fopen(filename, "w");
@@ -55,15 +58,15 @@ int main(int argc, char *argv[]){
     }
 
     for (i=0; i<N; i++) {
-        fprintf(f, "%f %f \n", x[i], y[i]);
+        fprintf(f, "%f %f %f %f \n", x[i], y_n[i], i0[i], i1[i]);
     }
 
     // clean up
     fclose(f);
-    free(x);
-    free(y);
-	cudaFree(d_x);
-	cudaFree(d_y); 
+    cudaFree(x);
+    cudaFree(y_n);
+	cudaFree(i0);
+	cudaFree(i1); 
 
 	return 0; 
 }

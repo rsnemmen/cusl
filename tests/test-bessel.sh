@@ -17,6 +17,7 @@ echo
 # tests
 ./test-gsl_bessel
 ./test-cu_bessel
+echo
 
 # plot
 python plot-bessel.py
