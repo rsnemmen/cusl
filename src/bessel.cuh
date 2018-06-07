@@ -232,6 +232,60 @@ static cheb_series ak12_cs = {
 */
 
 
+
+/* Debye functions [Abramowitz+Stegun, 9.3.9-10] */
+__device__
+inline static double 
+debye_u1(const double * tpow)
+{
+  return (3.0*tpow[1] - 5.0*tpow[3])/24.0;
+}
+
+__device__
+inline static double 
+debye_u2(const double * tpow)
+{
+  return (81.0*tpow[2] - 462.0*tpow[4] + 385.0*tpow[6])/1152.0;
+}
+
+__device__
+inline
+static double debye_u3(const double * tpow)
+{
+  return (30375.0*tpow[3] - 369603.0*tpow[5] + 765765.0*tpow[7] - 425425.0*tpow[9])/414720.0;
+}
+
+__device__
+inline
+static double debye_u4(const double * tpow)
+{
+  return (4465125.0*tpow[4] - 94121676.0*tpow[6] + 349922430.0*tpow[8] - 
+          446185740.0*tpow[10] + 185910725.0*tpow[12])/39813120.0;
+}
+
+__device__
+inline
+static double debye_u5(const double * tpow)
+{
+  return (1519035525.0*tpow[5]     - 49286948607.0*tpow[7] + 
+          284499769554.0*tpow[9]   - 614135872350.0*tpow[11] + 
+          566098157625.0*tpow[13]  - 188699385875.0*tpow[15])/6688604160.0;
+}
+
+#if 0
+inline
+static double debye_u6(const double * tpow)
+{
+  return (2757049477875.0*tpow[6] - 127577298354750.0*tpow[8] + 
+          1050760774457901.0*tpow[10] - 3369032068261860.0*tpow[12] + 
+          5104696716244125.0*tpow[14] - 3685299006138750.0*tpow[16] + 
+          1023694168371875.0*tpow[18])/4815794995200.0;
+}
+#endif
+
+
+
+
 /* 
   These routines compute the scaled irregular modified cylindrical 
   Bessel function of zeroth order \exp(x) K_0(x) for x>0. 
@@ -382,16 +436,14 @@ static double bessel_Kn_scaled_small_x(const int n, const double x)
   x >> nu*nu+1
 */
 __device__
-double gsl_sf_bessel_Knu_scaled_asympx_e(const double nu, const double x, gsl_sf_result * result)
+double cu_sf_bessel_Knu_scaled_asympx_e(const double nu, const double x)
 {
   double mu   = 4.0*nu*nu;
   double mum1 = mu-1.0;
   double mum9 = mu-9.0;
   double pre  = sqrt(M_PI/(2.0*x));
   double r    = nu/x;
-  result->val = pre * (1.0 + mum1/(8.0*x) + mum1*mum9/(128.0*x*x));
-  result->err = 2.0 * GSL_DBL_EPSILON * fabs(result->val) + pre * fabs(0.1*r*r*r);
-  return GSL_SUCCESS;
+  return pre * (1.0 + mum1/(8.0*x) + mum1*mum9/(128.0*x*x));
 }
 
 
@@ -403,7 +455,7 @@ double gsl_sf_bessel_Knu_scaled_asympx_e(const double nu, const double x, gsl_sf
  *   identical to that above for Inu_scaled
  */
 __device__
-double gsl_sf_bessel_Knu_scaled_asymp_unif_e(const double nu, const double x, gsl_sf_result * result)
+double cu_sf_bessel_Knu_scaled_asymp_unif_e(const double nu, const double x)
 {
   int i;
   double z = x/nu;
@@ -411,25 +463,15 @@ double gsl_sf_bessel_Knu_scaled_asymp_unif_e(const double nu, const double x, gs
   double pre = sqrt(M_PI/(2.0*nu*root_term));
   double eta = root_term + log(z/(1.0+root_term));
   double ex_arg = ( z < 1.0/GSL_ROOT3_DBL_EPSILON ? nu*(z - eta) : 0.5*nu/z*(1.0 + 1.0/(12.0*z*z)) );
-  gsl_sf_result ex_result;
-  int stat_ex = gsl_sf_exp_e(ex_arg, &ex_result);
-  if(stat_ex == GSL_SUCCESS) {
-    double t = 1.0/root_term;
-    double sum;
-    double tpow[16];
-    tpow[0] = 1.0;
-    for(i=1; i<16; i++) tpow[i] = t * tpow[i-1];
-    sum = 1.0 - debye_u1(tpow)/nu + debye_u2(tpow)/(nu*nu) - debye_u3(tpow)/(nu*nu*nu)
-          + debye_u4(tpow)/(nu*nu*nu*nu) - debye_u5(tpow)/(nu*nu*nu*nu*nu);
-    result->val  = pre * ex_result.val * sum;
-    result->err  = pre * ex_result.err * fabs(sum);
-    result->err += pre * ex_result.val / (nu*nu*nu*nu*nu*nu);
-    result->err += 2.0 * GSL_DBL_EPSILON * fabs(result->val);
-    return GSL_SUCCESS;
-  }
-  else {
-    result->val = 0.0;
-    result->err = 0.0;
-    return stat_ex;
-  }
+  double ex_result = exp(ex_arg);
+
+  double t = 1.0/root_term;
+  double sum;
+  double tpow[16];
+  tpow[0] = 1.0;
+  for(i=1; i<16; i++) tpow[i] = t * tpow[i-1];
+  sum = 1.0 - debye_u1(tpow)/nu + debye_u2(tpow)/(nu*nu) - debye_u3(tpow)/(nu*nu*nu)
+        + debye_u4(tpow)/(nu*nu*nu*nu) - debye_u5(tpow)/(nu*nu*nu*nu*nu);
+
+  return pre * ex_result * sum;
 }
