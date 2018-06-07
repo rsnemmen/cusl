@@ -112,6 +112,8 @@ static double ak02_data[14] = {
   -.2341685117579242403E-16
 };
 
+
+
 __constant__ 
 static cheb_series ak02_cs = {
   ak02_data,
@@ -142,7 +144,7 @@ double cu_sf_bessel_K0_scaled_e(const double x)
     const double lx = log(x);
     const double ex = exp(x);
     const double x2 = x*x;
-    result = ex * (gsl_poly_eval(k0_poly,8,x2)-lx*(1.0+0.25*x2*gsl_poly_eval(i0_poly,7,0.25*x2)));
+    result = ex * (cu_poly_eval(k0_poly,8,x2)-lx*(1.0+0.25*x2*cu_poly_eval(i0_poly,7,0.25*x2)));
   }
   else if(x <= 8.0) {
     const double sx = sqrt(x);
