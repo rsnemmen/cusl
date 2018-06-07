@@ -1,7 +1,8 @@
 /*
-  This program uses CURAND on the device. Each thread will 
-  generate a random number from a uniform distribution between 0 and 1. 
-  It will print the numbers but not return them to the host.
+  Generate values from standard Bessel functions that come with the
+  CUDA Math Library.
+
+  cf. https://docs.nvidia.com/cuda/cuda-math-api/group__CUDA__MATH__DOUBLE.html#group__CUDA__MATH__DOUBLE
 */
 #include <stdio.h> 
 #include <stdlib.h> 
