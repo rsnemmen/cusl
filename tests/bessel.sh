@@ -8,16 +8,21 @@
 # 
 
 # compilation
-gcc test-gsl_bessel.c -o test-gsl_bessel -lgsl -lm -lgslcblas
+gcc bessel-gsl.c -o bessel-gsl -lgsl -lm -lgslcblas
 echo "Compiled GSL code"
-nvcc test-cu_bessel.cu -o test-cu_bessel -I../src
-echo "Compiled CUDA code"
+nvcc bessel-cusl.cu -o bessel-cusl -I../src
+echo "Compiled CUDA code, new Bessel functions"
+nvcc bessel-std.cu -o bessel-cuda-std -I../src
+echo "Compiled CUDA code, default Bessel functions"
 echo
 
 # tests
-./test-gsl_bessel
-./test-cu_bessel
+echo "Running tests"
+./bessel-gsl
+./bessel-cusl
+./bessel-cuda-std
 echo
 
 # plot
-python plot-bessel.py
+python bessel-plot.py
+python bessel-cusl-plot.py

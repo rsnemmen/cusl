@@ -19,13 +19,13 @@
 */
 
 
-__global__ void bessel(double *x, double *K0, double *i0, double *i1, int n){ 
+__global__ void bessel(double *x, double *K0, double *K1, double *i1, int n){ 
 	int id = blockIdx.x*blockDim.x + threadIdx.x; 
 
 	if (id>=n) return;
 
 	K0[id] =cu_sf_bessel_K0_scaled_e(x[id]);
-	//i0[id] =cyl_bessel_i0(x[id]);
+	K1[id] =cu_sf_bessel_K1_scaled_e(x[id]);
 	//i1[id] =cyl_bessel_i1(x[id]);
 }
 
@@ -33,12 +33,12 @@ __global__ void bessel(double *x, double *K0, double *i0, double *i1, int n){
 
 int main(int argc, char *argv[]){
 	int i;
-	double *x, *K0, *i0, *i1;
+	double *x, *K0, *K1, *i1;
 
 	// Allocate Unified Memory – accessible from CPU or GPU
 	cudaMallocManaged(&x, N*sizeof(double));
 	cudaMallocManaged(&K0, N*sizeof(double));	
-	cudaMallocManaged(&i0, N*sizeof(double));	
+	cudaMallocManaged(&K1, N*sizeof(double));	
 	cudaMallocManaged(&i1, N*sizeof(double));	
 
 	for (i=0; i<N; i++) {
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]){
 
 	// kernel launch
     printf("Computing Bessel function on the GPU\n");
-	bessel<<<(N+TPB-1)/TPB, TPB>>>(x, K0, i0, i1, N); 
+	bessel<<<(N+TPB-1)/TPB, TPB>>>(x, K0, K1, i1, N); 
 	
 	// Wait for GPU to finish before accessing on host
 	cudaDeviceSynchronize();
@@ -63,14 +63,14 @@ int main(int argc, char *argv[]){
 
     fprintf(f, "# x K0");
     for (i=0; i<N; i++) {
-        fprintf(f, "%f %f %f %f \n", x[i], K0[i], i0[i], i1[i]);
+        fprintf(f, "%f %f %f %f \n", x[i], K0[i], K1[i], i1[i]);
     }
 
     // clean up
     fclose(f);
     cudaFree(x);
     cudaFree(K0);
-	cudaFree(i0);
+	cudaFree(K1);
 	cudaFree(i1); 
 
 	return 0; 

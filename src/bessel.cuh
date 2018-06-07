@@ -272,45 +272,107 @@ double cu_sf_bessel_K0_scaled_e(const double x)
 
 
 
-PAREI AQUI CARALHO
 __device__
 double cu_sf_bessel_K1_scaled_e(const double x)
 {
   /* CHECK_POINTER(result) */
+  double c;
 
   if(x <= 0.0) {
-    DOMAIN_ERROR(result);
+    //DOMAIN_ERROR(result);
+    printf("error, x<=0");
+    return -1E6;
   }
   else if(x < 2.0*GSL_DBL_MIN) {
-    OVERFLOW_ERROR(result);
+    printf("error, overflow");
+    return -1E6;
   }
   else if(x < 1.0) {
     const double lx = log(x);
     const double ex = exp(x);
     const double x2 = x*x;
     const double t  = 0.25*x2;    
-    const double i1 = 0.5 * x * (1.0 + t * (0.5 + t * gsl_poly_eval(i1_poly,6,t)));
-    result->val  = ex * (x2 * gsl_poly_eval(k1_poly,9,x2) + x * lx * i1 + 1) / x;
-    result->err  = ex * (1.6+fabs(lx)*0.6) * GSL_DBL_EPSILON;
-    result->err += 2.0 * GSL_DBL_EPSILON * fabs(result->val);
-    return GSL_SUCCESS;
+    const double i1 = 0.5 * x * (1.0 + t * (0.5 + t * cu_poly_eval(i1_poly,6,t)));
+    return ex * (x2 * cu_poly_eval(k1_poly,9,x2) + x * lx * i1 + 1) / x;
   }
   else if(x <= 8.0) {
     const double sx = sqrt(x);
-    gsl_sf_result c;
-    cheb_eval_e(&ak1_cs, (16.0/x-9.0)/7.0, &c);
-    result->val  = (1.375 + c.val) / sx; /* 1.375 = 11/8 */
-    result->err  = c.err / sx;
-    result->err += 2.0 * GSL_DBL_EPSILON * fabs(result->val);
-    return GSL_SUCCESS;
+    c=cheb_eval_e(&ak1_cs, (16.0/x-9.0)/7.0);
+    return (1.375 + c) / sx; /* 1.375 = 11/8 */
   }
   else {
     const double sx = sqrt(x);
-    gsl_sf_result c;
-    cheb_eval_e(&ak12_cs, 16.0/x-1.0, &c);
-    result->val  = (1.25 + c.val) / sx;
-    result->err  = c.err / sx;
-    result->err += 2.0 * GSL_DBL_EPSILON * fabs(result->val);
-    return GSL_SUCCESS;
+    c=cheb_eval_e(&ak12_cs, 16.0/x-1.0);
+    return (1.25 + c) / sx;
   }
 }
+
+
+
+
+
+
+/*
+   [Abramowitz+Stegun, 9.6.11]
+   assumes n >= 1
+*/
+__device__ 
+static double bessel_Kn_scaled_small_x(const int n, const double x)
+{
+  int k;
+  double y = 0.25 * x * x;
+  double ln_x_2 = log(0.5*x);
+  double ex = exp(x);
+  double ln_nm1_fact;
+  double k_term;
+  double term1, sum1, ln_pre1;
+  double term2, sum2, pre2;
+
+  gsl_sf_lnfact_e((unsigned int)(n-1), &ln_nm1_fact);
+
+  ln_pre1 = -n*ln_x_2 + ln_nm1_fact.val;
+  if(ln_pre1 > GSL_LOG_DBL_MAX - 3.0) {
+    printf("error: overflow\n");
+    return -1E6;
+  }
+
+  sum1 = 1.0;
+  k_term = 1.0;
+  for(k=1; k<=n-1; k++) {
+    k_term *= -y/(k * (n-k));
+    sum1 += k_term;
+  }
+  term1 = 0.5 * exp(ln_pre1) * sum1;
+
+  pre2 = 0.5 * exp(n*ln_x_2);
+  if(pre2 > 0.0) {
+    const int KMAX = 20;
+    gsl_sf_result psi_n;
+    gsl_sf_result npk_fact;
+    double yk = 1.0;
+    double k_fact  = 1.0;
+    double psi_kp1 = -M_EULER;
+    double psi_npkp1;
+    psi_n=gsl_sf_psi_int_e(n, &psi_n);
+    npk_fact= gsl_sf_fact_e((unsigned int)n, &npk_fact);
+    psi_npkp1 = psi_n + 1.0/n;
+    sum2 = (psi_kp1 + psi_npkp1 - 2.0*ln_x_2)/npk_fact;
+    for(k=1; k<KMAX; k++) {
+      psi_kp1   += 1.0/k;
+      psi_npkp1 += 1.0/(n+k);
+      k_fact    *= k;
+      npk_fact *= n+k;
+      yk *= y;
+      k_term = yk*(psi_kp1 + psi_npkp1 - 2.0*ln_x_2)/(k_fact*npk_fact);
+      sum2 += k_term;
+    }
+    term2 = ( GSL_IS_ODD(n) ? -1.0 : 1.0 ) * pre2 * sum2;
+  }
+  else {
+    term2 = 0.0;
+  }
+
+  return ex * (term1 + term2);
+}
+
+
