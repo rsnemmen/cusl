@@ -12,6 +12,9 @@ typedef struct cheb_series_struct cheb_series;
 
 /* 
   Chebyshev series evaluation
+
+  There is definitely a faster way of computing the function
+  below in parallel in the GPU. Opting for simplicity for now.
 */
 __device__
 double cheb_eval_e(const cheb_series * cs, const double x)

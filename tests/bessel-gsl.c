@@ -1,3 +1,6 @@
+/* 
+  Compute all sorts of Bessel functions using the GSL Library
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
