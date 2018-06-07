@@ -354,7 +354,7 @@ static double bessel_Kn_scaled_small_x(const int n, const double x)
     double k_fact  = 1.0;
     double psi_kp1 = -M_EULER;
     double psi_npkp1;
-    psi_n=gsl_sf_psi_int_e(n, &psi_n);
+    psi_n=cu_sf_psi_int_e(n, &psi_n);
     npk_fact= cu_sf_fact_e((unsigned int)n);
     psi_npkp1 = psi_n + 1.0/n;
     sum2 = (psi_kp1 + psi_npkp1 - 2.0*ln_x_2)/npk_fact;
