@@ -622,80 +622,6 @@ static double lanczos_7_c[9] = {
 
 
 
-__device__
-int cu_sf_lngamma_e(double x, gsl_sf_result * result)
-{
-  /* CHECK_POINTER(result) */
-
-  if(fabs(x - 1.0) < 0.01) {
-    /* Note that we must amplify the errors
-     * from the Pade evaluations because of
-     * the way we must pass the argument, i.e.
-     * writing (1-x) is a loss of precision
-     * when x is near 1.
-     */
-    int stat = lngamma_1_pade(x - 1.0, result);
-    result->err *= 1.0/(GSL_DBL_EPSILON + fabs(x - 1.0));
-    return stat;
-  }
-  else if(fabs(x - 2.0) < 0.01) {
-    int stat = lngamma_2_pade(x - 2.0, result);
-    result->err *= 1.0/(GSL_DBL_EPSILON + fabs(x - 2.0));
-    return stat;
-  }
-  else if(x >= 0.5) {
-    return lngamma_lanczos(x, result);
-  }
-  else if(x == 0.0) {
-    DOMAIN_ERROR(result);
-  }
-  else if(fabs(x) < 0.02) {
-    double sgn;
-    return lngamma_sgn_0(x, result, &sgn);
-  }
-  else if(x > -0.5/(GSL_DBL_EPSILON*M_PI)) {
-    /* Try to extract a fractional
-     * part from x.
-     */
-    double z  = 1.0 - x;
-    double s  = sin(M_PI*z);
-    double as = fabs(s);
-    if(s == 0.0) {
-      DOMAIN_ERROR(result);
-    }
-    else if(as < M_PI*0.015) {
-      /* x is near a negative integer, -N */
-      if(x < INT_MIN + 2.0) {
-        result->val = 0.0;
-        result->err = 0.0;
-        GSL_ERROR ("error", GSL_EROUND);
-      }
-      else {
-        int N = -(int)(x - 0.5);
-        double eps = x + N;
-        double sgn;
-        return lngamma_sgn_sing(N, eps, result, &sgn);
-      }
-    }
-    else {
-      gsl_sf_result lg_z;
-      lngamma_lanczos(z, &lg_z);
-      result->val = M_LNPI - (log(as) + lg_z.val);
-      result->err = 2.0 * GSL_DBL_EPSILON * fabs(result->val) + lg_z.err;
-      return GSL_SUCCESS;
-    }
-  }
-  else {
-    /* |x| was too large to extract any fractional part */
-    result->val = 0.0;
-    result->err = 0.0;
-    GSL_ERROR ("error", GSL_EROUND);
-  }
-}
-
-
-
-
 
 /*
   These routines compute the factorial n!. The factorial is related to the 
@@ -712,7 +638,7 @@ int cu_sf_lnfact_e(const unsigned int n)
     return log(fact_table[n].f);
   }
   else {
-    return cu_sf_lngamma_e(n+1.0);
+    return lgamma(n+1.0);
   }
 }
 

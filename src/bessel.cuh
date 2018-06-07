@@ -327,10 +327,11 @@ static double bessel_Kn_scaled_small_x(const int n, const double x)
   double k_term;
   double term1, sum1, ln_pre1;
   double term2, sum2, pre2;
+  double ln_nm1_fact;
 
-  gsl_sf_lnfact_e((unsigned int)(n-1), &ln_nm1_fact);
+  ln_nm1_fact=cu_sf_lnfact_e((unsigned int)(n-1));
 
-  ln_pre1 = -n*ln_x_2 + ln_nm1_fact.val;
+  ln_pre1 = -n*ln_x_2 + ln_nm1_fact;
   if(ln_pre1 > GSL_LOG_DBL_MAX - 3.0) {
     printf("error: overflow\n");
     return -1E6;
