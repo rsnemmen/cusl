@@ -12,7 +12,7 @@
 #define N 100
 #define x0 0.1
 #define x1 5.
-#define filename "bessel-cuda.dat"
+#define filename "bessel-cuda-std.dat"
 
 
 

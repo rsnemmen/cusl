@@ -10,7 +10,7 @@
   in a GPU.
 */
 __device__
-double gsl_poly_eval(const double c[], const int len, const double x)
+double cu_poly_eval(const double c[], const int len, const double x)
 {
   int i;
   double ans = c[len-1];

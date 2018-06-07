@@ -1,5 +1,6 @@
 """
-Plots the modified Bessel function of the second kind
+Compares the plots of GSL modified Bessel function of the second kind
+with the CUDA Math Library Bessel functions.
 """
 
 import pylab, numpy
