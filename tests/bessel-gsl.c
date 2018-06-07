@@ -60,14 +60,14 @@ int main(int argc, char const *argv[])
     }
 
     for (i=0; i<N; i++) {
-        fprintf(f, "%f %f %f %f %f \n", x[i], K0[i], K1[i], Kn_small[i], Kn[i]);
+        fprintf(f, "%f %f %f %f \n", x[i], K0[i], K1[i], Kn[i]);
     }
 
     fclose(f);
     free(x);
     free(K0);
     free(K1);
-    free(Kn_small);
+    // free(Kn_small);
     // free(Knu_e);
     // free(Knu_unife);
     free(Kn);

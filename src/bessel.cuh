@@ -375,3 +375,61 @@ static double bessel_Kn_scaled_small_x(const int n, const double x)
 }
 
 
+
+
+/* 
+
+  x >> nu*nu+1
+*/
+__device__
+double gsl_sf_bessel_Knu_scaled_asympx_e(const double nu, const double x, gsl_sf_result * result)
+{
+  double mu   = 4.0*nu*nu;
+  double mum1 = mu-1.0;
+  double mum9 = mu-9.0;
+  double pre  = sqrt(M_PI/(2.0*x));
+  double r    = nu/x;
+  result->val = pre * (1.0 + mum1/(8.0*x) + mum1*mum9/(128.0*x*x));
+  result->err = 2.0 * GSL_DBL_EPSILON * fabs(result->val) + pre * fabs(0.1*r*r*r);
+  return GSL_SUCCESS;
+}
+
+
+
+
+/* nu -> Inf; uniform in x > 0  [Abramowitz+Stegun, 9.7.8]
+ *
+ * error:
+ *   identical to that above for Inu_scaled
+ */
+__device__
+double gsl_sf_bessel_Knu_scaled_asymp_unif_e(const double nu, const double x, gsl_sf_result * result)
+{
+  int i;
+  double z = x/nu;
+  double root_term = hypot(1.0,z);
+  double pre = sqrt(M_PI/(2.0*nu*root_term));
+  double eta = root_term + log(z/(1.0+root_term));
+  double ex_arg = ( z < 1.0/GSL_ROOT3_DBL_EPSILON ? nu*(z - eta) : 0.5*nu/z*(1.0 + 1.0/(12.0*z*z)) );
+  gsl_sf_result ex_result;
+  int stat_ex = gsl_sf_exp_e(ex_arg, &ex_result);
+  if(stat_ex == GSL_SUCCESS) {
+    double t = 1.0/root_term;
+    double sum;
+    double tpow[16];
+    tpow[0] = 1.0;
+    for(i=1; i<16; i++) tpow[i] = t * tpow[i-1];
+    sum = 1.0 - debye_u1(tpow)/nu + debye_u2(tpow)/(nu*nu) - debye_u3(tpow)/(nu*nu*nu)
+          + debye_u4(tpow)/(nu*nu*nu*nu) - debye_u5(tpow)/(nu*nu*nu*nu*nu);
+    result->val  = pre * ex_result.val * sum;
+    result->err  = pre * ex_result.err * fabs(sum);
+    result->err += pre * ex_result.val / (nu*nu*nu*nu*nu*nu);
+    result->err += 2.0 * GSL_DBL_EPSILON * fabs(result->val);
+    return GSL_SUCCESS;
+  }
+  else {
+    result->val = 0.0;
+    result->err = 0.0;
+    return stat_ex;
+  }
+}
