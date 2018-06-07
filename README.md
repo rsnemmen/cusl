@@ -28,6 +28,11 @@ cu_sf_psi_int_e: Digamma (Psi) function
 cu_poly_eval: polynomial evaluation
 
 
+# Tests
+
+describe tests of consistency between GSL results and CUSL
+
+
 # Work needed: TODO
 
 - [x] cu_ran_dir_3d test
