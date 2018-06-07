@@ -72,5 +72,5 @@
 /* other needlessly compulsive abstractions */
 
 #define IS_ODD(n)  ((n) & 1)
-#define IS_EVEN(n) (!(GSL_IS_ODD(n)))
+#define IS_EVEN(n) (!(IS_ODD(n)))
 //#define GSL_SIGN(x)    ((x) >= 0.0 ? 1 : -1)

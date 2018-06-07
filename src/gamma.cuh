@@ -1,3 +1,16 @@
+/* The maximum x such that gamma(x) is not
+ * considered an overflow.
+ */
+#define GSL_SF_GAMMA_XMAX  171.0
+
+/* The maximum n such that gsl_sf_fact(n) does not give an overflow. */
+#define GSL_SF_FACT_NMAX 170
+
+/* The maximum n such that gsl_sf_doublefact(n) does not give an overflow. */
+#define GSL_SF_DOUBLEFACT_NMAX 297
+
+
+
 __constant__
 static struct {int n; double f; long i; } fact_table[GSL_SF_FACT_NMAX + 1] = {
     { 0,  1.0,     1L     },
@@ -650,7 +663,7 @@ int cu_sf_lnfact_e(const unsigned int n)
   is 170. 
 */
 __device__
-int cu_sf_fact_e(const unsigned int n)
+double cu_sf_fact_e(const unsigned int n)
 {
   /* CHECK_POINTER(result) */
 

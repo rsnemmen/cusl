@@ -327,7 +327,6 @@ static double bessel_Kn_scaled_small_x(const int n, const double x)
   double k_term;
   double term1, sum1, ln_pre1;
   double term2, sum2, pre2;
-  double ln_nm1_fact;
 
   ln_nm1_fact=cu_sf_lnfact_e((unsigned int)(n-1));
 
@@ -348,13 +347,12 @@ static double bessel_Kn_scaled_small_x(const int n, const double x)
   pre2 = 0.5 * exp(n*ln_x_2);
   if(pre2 > 0.0) {
     const int KMAX = 20;
-    gsl_sf_result psi_n;
-    gsl_sf_result npk_fact;
+    double psi_n, npk_fact;
     double yk = 1.0;
     double k_fact  = 1.0;
     double psi_kp1 = -M_EULER;
     double psi_npkp1;
-    psi_n=cu_sf_psi_int_e(n, &psi_n);
+    psi_n=cu_sf_psi_int_e(n);
     npk_fact= cu_sf_fact_e((unsigned int)n);
     psi_npkp1 = psi_n + 1.0/n;
     sum2 = (psi_kp1 + psi_npkp1 - 2.0*ln_x_2)/npk_fact;
@@ -367,7 +365,7 @@ static double bessel_Kn_scaled_small_x(const int n, const double x)
       k_term = yk*(psi_kp1 + psi_npkp1 - 2.0*ln_x_2)/(k_fact*npk_fact);
       sum2 += k_term;
     }
-    term2 = ( GSL_IS_ODD(n) ? -1.0 : 1.0 ) * pre2 * sum2;
+    term2 = ( IS_ODD(n) ? -1.0 : 1.0 ) * pre2 * sum2;
   }
   else {
     term2 = 0.0;

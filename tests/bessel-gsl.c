@@ -38,7 +38,7 @@ int main(int argc, char const *argv[])
 		gsl_sf_bessel_K1_scaled_e(x[i], &r);
 		K1[i]=r.val;
 
-		// gsl_bessel_Kn_scaled_small_x(2, x[i], &r);
+		// bessel_Kn_scaled_small_x(2, x[i], &r);
 		// Kn_small[i]=r.val;
 
 		// gsl_sf_bessel_Knu_scaled_asympx_e(2.,x[i], &r);
@@ -60,14 +60,14 @@ int main(int argc, char const *argv[])
     }
 
     for (i=0; i<N; i++) {
-        fprintf(f, "%f %f %f %f \n", x[i], K0[i], K1[i], Kn[i]);
+        fprintf(f, "%f %f %f %f %f \n", x[i], K0[i], K1[i], Kn_small[i], Kn[i]);
     }
 
     fclose(f);
     free(x);
     free(K0);
     free(K1);
-    // free(Kn_small);
+    free(Kn_small);
     // free(Knu_e);
     // free(Knu_unife);
     free(Kn);

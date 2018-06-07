@@ -238,6 +238,6 @@ double cu_sf_psi_int_e(const int n)
     const double c5 =  1.0/240.0;
     const double ni2 = (1.0/n)*(1.0/n);
     const double ser = ni2 * (c2 + ni2 * (c3 + ni2 * (c4 + ni2*c5)));
-    return log(n) - 0.5/n + ser;
+    return log((double)n) - 0.5/n + ser;
   }
 }

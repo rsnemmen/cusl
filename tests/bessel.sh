@@ -24,5 +24,5 @@ echo "Running tests"
 echo
 
 # plot
-python bessel-plot.py
+#python bessel-plot.py
 python bessel-cusl-plot.py
