@@ -334,7 +334,7 @@ static double bessel_Kn_scaled_small_x(const int n, const double x)
   ln_pre1 = -n*ln_x_2 + ln_nm1_fact;
   if(ln_pre1 > GSL_LOG_DBL_MAX - 3.0) {
     printf("error: overflow\n");
-    return -1E6;
+    return 1E50;
   }
 
   sum1 = 1.0;
@@ -355,7 +355,7 @@ static double bessel_Kn_scaled_small_x(const int n, const double x)
     double psi_kp1 = -M_EULER;
     double psi_npkp1;
     psi_n=gsl_sf_psi_int_e(n, &psi_n);
-    npk_fact= gsl_sf_fact_e((unsigned int)n, &npk_fact);
+    npk_fact= cu_sf_fact_e((unsigned int)n);
     psi_npkp1 = psi_n + 1.0/n;
     sum2 = (psi_kp1 + psi_npkp1 - 2.0*ln_x_2)/npk_fact;
     for(k=1; k<KMAX; k++) {

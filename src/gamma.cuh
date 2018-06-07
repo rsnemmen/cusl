@@ -643,6 +643,33 @@ int cu_sf_lnfact_e(const unsigned int n)
 }
 
 
+/*
+  These routines compute the factorial n!. The factorial is related to the 
+  Gamma function by n! = \Gamma(n+1). The maximum value of n such that n! 
+  is not considered an overflow is given by the macro GSL_SF_FACT_NMAX and 
+  is 170. 
+*/
+__device__
+int cu_sf_fact_e(const unsigned int n)
+{
+  /* CHECK_POINTER(result) */
+
+  if(n < 18) {
+    return fact_table[n].f;
+  }
+  else if(n <= GSL_SF_FACT_NMAX){
+    return fact_table[n].f;
+  }
+  else {
+    printf("Error: overflow\n");
+    return 1E40;
+    //OVERFLOW_ERROR(result);
+  }
+}
+
+
+
+
 
 /* The Gamma distribution of order a>0 is defined by:
    p(x) dx = {1 / \Gamma(a) b^a } x^{a-1} e^{-x/b} dx
