@@ -442,7 +442,7 @@ double cu_sf_bessel_Knu_scaled_asympx_e(const double nu, const double x)
   double mum1 = mu-1.0;
   double mum9 = mu-9.0;
   double pre  = sqrt(M_PI/(2.0*x));
-  double r    = nu/x;
+  //double r    = nu/x;
   return pre * (1.0 + mum1/(8.0*x) + mum1*mum9/(128.0*x*x));
 }
 
@@ -474,4 +474,76 @@ double cu_sf_bessel_Knu_scaled_asymp_unif_e(const double nu, const double x)
         + debye_u4(tpow)/(nu*nu*nu*nu) - debye_u5(tpow)/(nu*nu*nu*nu*nu);
 
   return pre * ex_result * sum;
+}
+
+
+
+
+
+/*
+  These routines compute the irregular modified cylindrical Bessel 
+  function of order n, K_n(x), for x > 0. It is also called simply the 
+  modified Bessel function of the second kind, function BesselK[2,x] 
+  in Mathematica).
+
+  result.val (GSL) => result (CUSL)
+*/
+__device__
+double cu_sf_bessel_Kn(int n, const double x)
+{
+  double result;
+
+  n = abs(n); /* K(-n, z) = K(n, z) */
+
+  /* CHECK_POINTER(result) */
+
+  if(x <= 0.0) {
+    printf("Invalid x for Bessel\n");
+      return -1E40; 
+  }
+  else if(n == 0) {
+    //printf("n=0 not yet supported in CUDA Bessel\n");
+      result= cu_sf_bessel_K0_scaled_e(x);
+  }
+  else if(n == 1) {
+    //printf("n=1 not yet supported in CUDA Bessel\n"); 
+      result= cu_sf_bessel_K1_scaled_e(x);
+  }
+  else if(x <= 5.0) {
+    result= bessel_Kn_scaled_small_x(n, x);
+  }
+  else if(GSL_ROOT3_DBL_EPSILON * x > 0.25 * (n*n + 1)) {
+    result= cu_sf_bessel_Knu_scaled_asympx_e((double)n, x);
+  }
+  else if(fmin(0.29/(n*n), 0.5/(n*n + x*x)) < GSL_ROOT3_DBL_EPSILON) {
+    result= cu_sf_bessel_Knu_scaled_asymp_unif_e((double)n, x);
+  }
+  else {
+    /* Upward recurrence. [Gradshteyn + Ryzhik, 8.471.1] */
+    double two_over_x = 2.0/x;
+    //gsl_sf_result r_b_jm1;
+    //gsl_sf_result r_b_j;
+    double b_jm1 = cu_sf_bessel_K0_scaled_e(x);
+    double b_j = cu_sf_bessel_K1_scaled_e(x);
+    //double b_jm1 = r_b_jm1.val;
+    //double b_j   = r_b_j.val;
+    double b_jp1;
+    int j;
+
+    for(j=1; j<n; j++) {
+      b_jp1 = b_jm1 + j * two_over_x * b_j;
+      b_jm1 = b_j;
+      b_j   = b_jp1; 
+    } 
+    
+    result = b_j;
+  }
+
+  /*
+  ===============================================
+  */
+
+  result *= exp(-x);
+
+  return result;
 }
