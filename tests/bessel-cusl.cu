@@ -1,3 +1,7 @@
+/* 
+  Testing the CUSL Bessel implementations
+*/
+
 #include <stdio.h> 
 #include <stdlib.h> 
 #include "cheb_eval.cuh"
