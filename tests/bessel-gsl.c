@@ -1,4 +1,4 @@
-/* 
+/*
   Compute all sorts of Bessel functions using the GSL Library
 */
 #include <stdio.h>
@@ -11,7 +11,7 @@
 
 #define N 100
 #define x0 0.1
-#define x1 5.
+#define x1 20.
 #define filename "bessel-gsl.dat"
 
 int main(int argc, char const *argv[])
@@ -19,12 +19,15 @@ int main(int argc, char const *argv[])
 	int i;
 	gsl_sf_result r;
 	double *x = (double *)malloc(N*sizeof(double));
-	double *K0 = (double *)malloc(N*sizeof(double));	
-	double *K1 = (double *)malloc(N*sizeof(double));	
-	// double *Kn_small = (double *)malloc(N*sizeof(double));	
-	// double *Knu_e = (double *)malloc(N*sizeof(double));	
-	// double *Knu_unife = (double *)malloc(N*sizeof(double));	
-	double *Kn = (double *)malloc(N*sizeof(double));	
+	double *K0 = (double *)malloc(N*sizeof(double));
+	double *K1 = (double *)malloc(N*sizeof(double));
+	// double *Kn_small = (double *)malloc(N*sizeof(double));
+	// double *Knu_e = (double *)malloc(N*sizeof(double));
+	// double *Knu_unife = (double *)malloc(N*sizeof(double));
+	double *K2 = (double *)malloc(N*sizeof(double));
+	double *K3 = (double *)malloc(N*sizeof(double));
+	double *K4 = (double *)malloc(N*sizeof(double));
+	double *K5 = (double *)malloc(N*sizeof(double));
 
 	for (i=0; i<N; i++) {
 		// generate array of x-values
@@ -34,7 +37,7 @@ int main(int argc, char const *argv[])
 		gsl_sf_bessel_K0_scaled_e(x[i], &r);
 		K0[i]=r.val;
 
-		// irregular modified cylindrical Bessel function of first order, K_1(x), for x > 0. 
+		// irregular modified cylindrical Bessel function of first order, K_1(x), for x > 0.
 		gsl_sf_bessel_K1_scaled_e(x[i], &r);
 		K1[i]=r.val;
 
@@ -48,7 +51,10 @@ int main(int argc, char const *argv[])
 		// Knu_unife[i]=r.val;
 
 		// irregular modified cylindrical Bessel function of order n, K_n(x)
-		Kn[i]=gsl_sf_bessel_Kn(2,x[i]);
+		K2[i]=gsl_sf_bessel_Kn(2,x[i]);
+		K3[i]=gsl_sf_bessel_Kn(3,x[i]);
+		K4[i]=gsl_sf_bessel_Kn(4,x[i]);
+		K5[i]=gsl_sf_bessel_Kn(5,x[i]);
 	}
 
 	// write file
@@ -59,8 +65,9 @@ int main(int argc, char const *argv[])
         exit(1);
     }
 
+    fprintf(f, "# x K0_scaled K1_scaled K2 K3 K4 K5\n");
     for (i=0; i<N; i++) {
-        fprintf(f, "%f %f %f %f \n", x[i], K0[i], K1[i], Kn[i]);
+        fprintf(f, "%f %f %f %f %f %f %f\n", x[i], K0[i], K1[i], K2[i], K3[i], K4[i], K5[i]);
     }
 
     fclose(f);
@@ -70,7 +77,10 @@ int main(int argc, char const *argv[])
     // free(Kn_small);
     // free(Knu_e);
     // free(Knu_unife);
-    free(Kn);
+    free(K2);
+    free(K3);
+    free(K4);
+    free(K5);
 
 	return 0;
 }

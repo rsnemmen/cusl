@@ -4,10 +4,18 @@
 
   cf. https://docs.nvidia.com/cuda/cuda-math-api/group__CUDA__MATH__DOUBLE.html#group__CUDA__MATH__DOUBLE
 */
-#include <stdio.h> 
-#include <stdlib.h> 
+#include <stdio.h>
+#include <stdlib.h>
 
-#define TPB 64  
+#define TPB 64
+
+#define CUDA_CHECK(call) do { \
+	cudaError_t err = (call); \
+	if (err != cudaSuccess) { \
+		fprintf(stderr, "CUDA error %s:%d: %s\n", __FILE__, __LINE__, cudaGetErrorString(err)); \
+		exit(1); \
+	} \
+} while (0)
 
 #define N 100
 #define x0 0.1
@@ -16,8 +24,8 @@
 
 
 
-__global__ void bessel(double *x, double *y_n, double *i0, double *i1, int n){ 
-	int id = blockIdx.x*blockDim.x + threadIdx.x; 
+__global__ void bessel(double *x, double *y_n, double *i0, double *i1, int n){
+	int id = blockIdx.x*blockDim.x + threadIdx.x;
 
 	if (id>=n) return;
 
@@ -32,23 +40,24 @@ int main(int argc, char *argv[]){
 	int i;
 	double *x, *y_n, *i0, *i1;
 
-	// Allocate Unified Memory – accessible from CPU or GPU
-	cudaMallocManaged(&x, N*sizeof(double));
-	cudaMallocManaged(&y_n, N*sizeof(double));	
-	cudaMallocManaged(&i0, N*sizeof(double));	
-	cudaMallocManaged(&i1, N*sizeof(double));	
+	// Allocate Unified Memory - accessible from CPU or GPU
+	CUDA_CHECK(cudaMallocManaged(&x, N*sizeof(double)));
+	CUDA_CHECK(cudaMallocManaged(&y_n, N*sizeof(double)));
+	CUDA_CHECK(cudaMallocManaged(&i0, N*sizeof(double)));
+	CUDA_CHECK(cudaMallocManaged(&i1, N*sizeof(double)));
 
 	for (i=0; i<N; i++) {
 		// generate array of x-values
 		x[i]=x0+i*(x1-x0)/(N-1);
-	}	
+	}
 
 	// kernel launch
     printf("Computing Bessel function on the GPU\n");
-	bessel<<<(N+TPB-1)/TPB, TPB>>>(x, y_n, i0, i1, N); 
-	
+	bessel<<<(N+TPB-1)/TPB, TPB>>>(x, y_n, i0, i1, N);
+	CUDA_CHECK(cudaGetLastError());
+
 	// Wait for GPU to finish before accessing on host
-	cudaDeviceSynchronize();
+	CUDA_CHECK(cudaDeviceSynchronize());
 
 	// write file
 	printf("Saving file %s\n", filename);
@@ -64,10 +73,10 @@ int main(int argc, char *argv[]){
 
     // clean up
     fclose(f);
-    cudaFree(x);
-    cudaFree(y_n);
-	cudaFree(i0);
-	cudaFree(i1); 
+    CUDA_CHECK(cudaFree(x));
+    CUDA_CHECK(cudaFree(y_n));
+	CUDA_CHECK(cudaFree(i0));
+	CUDA_CHECK(cudaFree(i1));
 
-	return 0; 
+	return 0;
 }

@@ -1,4 +1,8 @@
 #define PSI_TABLE_NMAX 100
+
+#ifndef CUSL_NAN
+#define CUSL_NAN (0.0/0.0)
+#endif
 __constant__
 static double psi_table[PSI_TABLE_NMAX+1] = {
   0.0,  /* Infinity */              /* psi(0) */
@@ -224,7 +228,7 @@ double cu_sf_psi_int_e(const int n)
 
   if(n <= 0) {
     printf("Domain error, n<=0 in psi_int_e\n");
-    return -1E10;
+    return CUSL_NAN;
     //DOMAIN_ERROR(result);
   }
   else if(n <= PSI_TABLE_NMAX) {

@@ -1,6 +1,10 @@
 /* The maximum x such that gamma(x) is not
  * considered an overflow.
  */
+#ifndef CUSL_NAN
+#define CUSL_NAN (0.0/0.0)
+#endif
+
 #define GSL_SF_GAMMA_XMAX  171.0
 
 /* The maximum n such that gsl_sf_fact(n) does not give an overflow. */
@@ -643,7 +647,7 @@ static double lanczos_7_c[9] = {
   is 170.
 */ 
 __device__
-int cu_sf_lnfact_e(const unsigned int n)
+double cu_sf_lnfact_e(const unsigned int n)
 {
   /* CHECK_POINTER(result) */
 
@@ -675,7 +679,7 @@ double cu_sf_fact_e(const unsigned int n)
   }
   else {
     printf("Error: overflow\n");
-    return 1E40;
+    return CUSL_NAN;
     //OVERFLOW_ERROR(result);
   }
 }
@@ -696,7 +700,9 @@ double cu_sf_fact_e(const unsigned int n)
 
 __device__ 
 double cu_ran_gamma_double(curandState *r, const double a, const double b){
-/* assume a > 0 */
+if (a <= 0.0 || b <= 0.0) {
+    return CUSL_NAN;
+}
 
 if (a < 1){
     double u = curand_uniform_double(r);

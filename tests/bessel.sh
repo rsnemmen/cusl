@@ -1,11 +1,12 @@
 #!/bin/sh
+set -e
 #
 # This script compiles and executes the testing units for the GSL and CUDA
 # Bessel function implementations. After running this, you should have
-# two files in the current folder: 
+# two files in the current folder:
 # 	• `bessel-gsl.dat`, output from GSL routines
-# 	• `bessel-cuda.dat`, output from the CUDA routines
-# 
+# 	• `bessel-cuda-cusl.dat`, output from the CUSL CUDA routines
+#
 
 # compilation
 gcc bessel-gsl.c -o bessel-gsl -lgsl -lm -lgslcblas

@@ -1,4 +1,4 @@
-/* These routines compute different Bessel functions.  
+/* These routines compute different Bessel functions.
 
    Currently the CUDA implementation only supports order 2<=n<=5.
 
@@ -6,6 +6,10 @@
 */
 
 #include "gsl_machine.h"
+
+#ifndef CUSL_NAN
+#define CUSL_NAN (0.0/0.0)
+#endif
 
 
 /* evaluate a function discarding the status value in a modifiable way */
@@ -27,7 +31,7 @@
  Minimax rational approximation for [0,1), peak relative error = 2.04*GSL_DBL_EPSILON.
  Source: http://www.advanpix.com/?p=3812
 */
-__constant__ 
+__constant__
 static double k0_poly[8] = {
    1.1593151565841244842077226e-01,
    2.7898287891460317300886539e-01,
@@ -39,7 +43,7 @@ static double k0_poly[8] = {
    6.6117104672254184399933971e-12
 };
 
-__constant__ 
+__constant__
 static double i0_poly[7] = {
    1.0000000000000000044974165e+00,
    2.4999999999999822316775454e-01,
@@ -51,10 +55,10 @@ static double i0_poly[7] = {
 };
 
 /*
- Chebyshev expansion for [1,8], peak relative error = 1.28*GSL_DBL_EPSILON. 
+ Chebyshev expansion for [1,8], peak relative error = 1.28*GSL_DBL_EPSILON.
  Source: Pavel Holoborodko.
 */
-__constant__ 
+__constant__
 static double ak0_data[24] = {
   -3.28737867094650101e-02,
   -4.49369057710236880e-02,
@@ -82,7 +86,7 @@ static double ak0_data[24] = {
   -3.41407346762502397e-17
 };
 
-__constant__ 
+__constant__
 static cheb_series ak0_cs = {
   ak0_data,
   23,
@@ -90,11 +94,11 @@ static cheb_series ak0_cs = {
   10
 };
 
-/* 
+/*
  Chebyshev expansion for [8,inf), peak relative error = 1.25*GSL_DBL_EPSILON.
  Source: SLATEC/dbsk0e.f
 */
-__constant__ 
+__constant__
 static double ak02_data[14] = {
   -.1201869826307592240E-1,
   -.9174852691025695311E-2,
@@ -114,7 +118,7 @@ static double ak02_data[14] = {
 
 
 
-__constant__ 
+__constant__
 static cheb_series ak02_cs = {
   ak02_data,
   13,
@@ -127,7 +131,7 @@ static cheb_series ak02_cs = {
  Minimax rational approximation for [0,1), peak relative error = 1.83*GSL_DBL_EPSILON.
  Source: http://www.advanpix.com/?p=3987
 */
-__constant__ 
+__constant__
 static double k1_poly[9] = {
   -3.0796575782920622440538935e-01,
   -8.5370719728650778045782736e-02,
@@ -140,7 +144,7 @@ static double k1_poly[9] = {
   -1.5261293392975541707230366e-15
 };
 
-__constant__ 
+__constant__
 static double i1_poly[7] = {
   8.3333333333333325191635191e-02,
   6.9444444444467956461838830e-03,
@@ -151,10 +155,10 @@ static double i1_poly[7] = {
 };
 
 /*
- Chebyshev expansion for [1,8], peak relative error = 1.28*GSL_DBL_EPSILON. 
+ Chebyshev expansion for [1,8], peak relative error = 1.28*GSL_DBL_EPSILON.
  Source: Pavel Holoborodko.
 */
-__constant__ 
+__constant__
 static double ak1_data[25] = {
   +2.07996868001418246e-01,
   +1.62581565017881476e-01,
@@ -183,7 +187,7 @@ static double ak1_data[25] = {
   -1.10456856122581316e-17
 };
 
-__constant__ 
+__constant__
 static cheb_series ak1_cs = {
   ak1_data,
   24,
@@ -191,11 +195,11 @@ static cheb_series ak1_cs = {
   9
 };
 
-/* 
+/*
  Chebyshev expansion for [8,inf), peak relative error = 1.25*GSL_DBL_EPSILON.
  Source: SLATEC/dbsk1e.f
 */
-__constant__ 
+__constant__
 static double ak12_data[14] = {
   +.637930834373900104E-1,
   +.283288781304972094E-1,
@@ -213,7 +217,7 @@ static double ak12_data[14] = {
   +.258288572982327496E-16
 };
 
-__constant__ 
+__constant__
 static cheb_series ak12_cs = {
   ak12_data,
   13,
@@ -235,14 +239,14 @@ static cheb_series ak12_cs = {
 
 /* Debye functions [Abramowitz+Stegun, 9.3.9-10] */
 __device__
-inline static double 
+inline static double
 debye_u1(const double * tpow)
 {
   return (3.0*tpow[1] - 5.0*tpow[3])/24.0;
 }
 
 __device__
-inline static double 
+inline static double
 debye_u2(const double * tpow)
 {
   return (81.0*tpow[2] - 462.0*tpow[4] + 385.0*tpow[6])/1152.0;
@@ -259,7 +263,7 @@ __device__
 inline
 static double debye_u4(const double * tpow)
 {
-  return (4465125.0*tpow[4] - 94121676.0*tpow[6] + 349922430.0*tpow[8] - 
+  return (4465125.0*tpow[4] - 94121676.0*tpow[6] + 349922430.0*tpow[8] -
           446185740.0*tpow[10] + 185910725.0*tpow[12])/39813120.0;
 }
 
@@ -267,8 +271,8 @@ __device__
 inline
 static double debye_u5(const double * tpow)
 {
-  return (1519035525.0*tpow[5]     - 49286948607.0*tpow[7] + 
-          284499769554.0*tpow[9]   - 614135872350.0*tpow[11] + 
+  return (1519035525.0*tpow[5]     - 49286948607.0*tpow[7] +
+          284499769554.0*tpow[9]   - 614135872350.0*tpow[11] +
           566098157625.0*tpow[13]  - 188699385875.0*tpow[15])/6688604160.0;
 }
 
@@ -276,9 +280,9 @@ static double debye_u5(const double * tpow)
 inline
 static double debye_u6(const double * tpow)
 {
-  return (2757049477875.0*tpow[6] - 127577298354750.0*tpow[8] + 
-          1050760774457901.0*tpow[10] - 3369032068261860.0*tpow[12] + 
-          5104696716244125.0*tpow[14] - 3685299006138750.0*tpow[16] + 
+  return (2757049477875.0*tpow[6] - 127577298354750.0*tpow[8] +
+          1050760774457901.0*tpow[10] - 3369032068261860.0*tpow[12] +
+          5104696716244125.0*tpow[14] - 3685299006138750.0*tpow[16] +
           1023694168371875.0*tpow[18])/4815794995200.0;
 }
 #endif
@@ -286,9 +290,9 @@ static double debye_u6(const double * tpow)
 
 
 
-/* 
-  These routines compute the scaled irregular modified cylindrical 
-  Bessel function of zeroth order \exp(x) K_0(x) for x>0. 
+/*
+  These routines compute the scaled irregular modified cylindrical
+  Bessel function of zeroth order \exp(x) K_0(x) for x>0.
 */
 __device__
 double cu_sf_bessel_K0_scaled_e(const double x)
@@ -299,7 +303,7 @@ double cu_sf_bessel_K0_scaled_e(const double x)
   if(x <= 0.0) {
     //DOMAIN_ERROR(result);
     printf("error! x<=0\n");
-    return -1E6;
+    return CUSL_NAN;
   }
   else if(x < 1.0) {
     const double lx = log(x);
@@ -316,7 +320,7 @@ double cu_sf_bessel_K0_scaled_e(const double x)
     const double sx = sqrt(x);
     c=cheb_eval_e(&ak02_cs, 16.0/x-1.0);
     result= (1.25 + c) / sx;
-  } 
+  }
 
   return result;
 }
@@ -335,17 +339,17 @@ double cu_sf_bessel_K1_scaled_e(const double x)
   if(x <= 0.0) {
     //DOMAIN_ERROR(result);
     printf("error, x<=0");
-    return -1E6;
+    return CUSL_NAN;
   }
   else if(x < 2.0*GSL_DBL_MIN) {
     printf("error, overflow");
-    return -1E6;
+    return CUSL_NAN;
   }
   else if(x < 1.0) {
     const double lx = log(x);
     const double ex = exp(x);
     const double x2 = x*x;
-    const double t  = 0.25*x2;    
+    const double t  = 0.25*x2;
     const double i1 = 0.5 * x * (1.0 + t * (0.5 + t * cu_poly_eval(i1_poly,6,t)));
     return ex * (x2 * cu_poly_eval(k1_poly,9,x2) + x * lx * i1 + 1) / x;
   }
@@ -370,7 +374,7 @@ double cu_sf_bessel_K1_scaled_e(const double x)
    [Abramowitz+Stegun, 9.6.11]
    assumes n >= 1
 */
-__device__ 
+__device__
 static double bessel_Kn_scaled_small_x(const int n, const double x)
 {
   int k;
@@ -387,7 +391,7 @@ static double bessel_Kn_scaled_small_x(const int n, const double x)
   ln_pre1 = -n*ln_x_2 + ln_nm1_fact;
   if(ln_pre1 > GSL_LOG_DBL_MAX - 3.0) {
     printf("error: overflow\n");
-    return 1E50;
+    return CUSL_NAN;
   }
 
   sum1 = 1.0;
@@ -431,7 +435,7 @@ static double bessel_Kn_scaled_small_x(const int n, const double x)
 
 
 
-/* 
+/*
 
   x >> nu*nu+1
 */
@@ -481,9 +485,9 @@ double cu_sf_bessel_Knu_scaled_asymp_unif_e(const double nu, const double x)
 
 
 /*
-  These routines compute the irregular modified cylindrical Bessel 
-  function of order n, K_n(x), for x > 0. It is also called simply the 
-  modified Bessel function of the second kind, function BesselK[2,x] 
+  These routines compute the irregular modified cylindrical Bessel
+  function of order n, K_n(x), for x > 0. It is also called simply the
+  modified Bessel function of the second kind, function BesselK[2,x]
   in Mathematica).
 
   result.val (GSL) => result (CUSL)
@@ -499,14 +503,14 @@ double cu_sf_bessel_Kn(int n, const double x)
 
   if(x <= 0.0) {
     printf("Invalid x for Bessel\n");
-      return -1E40; 
+      return CUSL_NAN;
   }
   else if(n == 0) {
     //printf("n=0 not yet supported in CUDA Bessel\n");
       result= cu_sf_bessel_K0_scaled_e(x);
   }
   else if(n == 1) {
-    //printf("n=1 not yet supported in CUDA Bessel\n"); 
+    //printf("n=1 not yet supported in CUDA Bessel\n");
       result= cu_sf_bessel_K1_scaled_e(x);
   }
   else if(x <= 5.0) {
@@ -533,9 +537,9 @@ double cu_sf_bessel_Kn(int n, const double x)
     for(j=1; j<n; j++) {
       b_jp1 = b_jm1 + j * two_over_x * b_j;
       b_jm1 = b_j;
-      b_j   = b_jp1; 
-    } 
-    
+      b_j   = b_jp1;
+    }
+
     result = b_j;
   }
 

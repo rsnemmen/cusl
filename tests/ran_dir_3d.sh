@@ -1,10 +1,13 @@
+#!/bin/sh
+set -e
+
 # compile 
-gcc test-gsl_ran_dir_3d.c -o test-gsl_ran_dir_3d -lgsl -lm -lgslcblas
+gcc ran_dir_3d-gsl.c -o ran_dir_3d-gsl -lgsl -lm -lgslcblas
 echo "Compiled GSL code"
-nvcc test-cu_ran_dir_3d.cu -o test-cu_ran_dir_3d -I../src
+nvcc ran_dir_3d.cu -o ran_dir_3d -I../src -lcurand
 echo "Compiled CUDA code"
 
 # test
-./test-gsl_ran_dir_3d 10
+./ran_dir_3d-gsl 10
 echo
-./test-cu_ran_dir_3d 10 1
+./ran_dir_3d 10 1

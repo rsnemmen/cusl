@@ -7,7 +7,7 @@ import pylab, numpy
 
 x,k0,k1,kn = numpy.loadtxt('bessel-gsl.dat',unpack=True,usecols=(0,1,2,3))
 xm,ym = numpy.loadtxt('bessel-mathematica.dat',unpack=True,usecols=(0,1))
-xc,yn,i0,i1 = numpy.loadtxt('bessel-cuda.dat',unpack=True,usecols=(0,1,2,3))
+xc,yn,i0,i1 = numpy.loadtxt('bessel-cuda-std.dat',unpack=True,usecols=(0,1,2,3))
 
 pylab.clf()
 
