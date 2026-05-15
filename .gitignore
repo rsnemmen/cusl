@@ -1,0 +1,12 @@
+.DS_Store
+site/
+
+# Test binaries and generated comparison outputs
+tests/bessel-gsl
+tests/bessel-cusl
+tests/bessel-cuda-std
+tests/ran_dir_3d-gsl
+tests/ran_dir_3d
+tests/*.dat
+tests/*.png
+tests/*.pdf

@@ -1,42 +1,45 @@
 CUSL: A CUDA port of the GNU Scientific Library
 =================================================
 
-Port of some routines of the GNU Scientific Library (GSL) to CUDA.
+CUSL is an experimental CUDA port of selected GNU Scientific Library (GSL)
+routines. It is a small, header-oriented project focused on CUDA device code,
+not a complete GSL replacement.
 
-# Dependencies
+Full documentation is available at:
 
-cuRAND
+- https://rsnemmen.github.io/cusl/
 
-# Available functions
+## Quick start
 
-- gsl_ran_dir_3d => sphere.cuh/cu_ran_dir_3d
+Run from `tests/`:
 
-cu_sf_bessel_K0_scaled_e
-cu_sf_bessel_K1_scaled_e
-gsl_sf_bessel_Kn
+```sh
+sh bessel.sh
+sh ran_dir_3d.sh
+```
 
-- gsl_ran_chisq
+These scripts compile and run small comparison programs against GSL and CUDA
+reference implementations.
 
-cheb_eval_e
+## Documentation
 
-gsl_sf_lnfact_e
-gsl_sf_fact_e: factorial
-gsl_ran_gamma_double: Gamma distribution
+The documentation covers:
 
-cu_sf_psi_int_e: Digamma (Psi) function
+- available routines and GSL-to-CUSL mapping
+- dependencies and build commands
+- validation scripts and known test gaps
+- porting notes for future routines
 
-cu_poly_eval: polynomial evaluation
+To preview the documentation locally:
 
+```sh
+python -m pip install -r requirements-docs.txt
+mkdocs serve
+```
 
-# Tests
+## Status
 
-describe tests of consistency between GSL results and CUSL
-
-
-# Work needed: TODO
-
-- [x] cu_ran_dir_3d test
-- [ ] further tests of distribution of vectors from cu_ran_dir_3d, comparison with GSL. Since we do not have the same RNG available in the GPU and GSL, we cannot test random vectors for the same random numbers 
-- [ ] test cu_sf_bessel_Kn
-- [ ] cu_ran_chisq: check if distribution is correct and matches GSL
-- [ ] error checking like GSL: I removed all calls to `gsl_sf_result` to simplify things, so there is very little automatic error checking in the CUDA routines available here
+- `src/` contains CUDA headers for selected Bessel, Gamma, Psi, polynomial,
+  Chebyshev, chi-square, and random-direction routines.
+- `tests/` contains standalone validation programs and scripts.
+- GSL-style result/status error handling is not fully implemented.

@@ -1,0 +1,17 @@
+site_name: CUSL
+site_description: CUDA ports of selected GNU Scientific Library routines
+site_url: https://rsnemmen.github.io/cusl/
+repo_url: https://github.com/rsnemmen/cusl
+repo_name: rsnemmen/cusl
+
+theme:
+  name: readthedocs
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Routines: routines.md
+  - Validation: validation.md
+  - Porting Notes: porting-notes.md
+
+strict: true
