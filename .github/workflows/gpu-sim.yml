@@ -1,0 +1,109 @@
+name: GPU Simulator
+
+# Optional, non-required check. The hosted runners have no GPU, so this runs
+# the CUDA tests on a simulated NVIDIA H100
+# (https://github.com/pantheongpu/pantheonsim). A simulator has no timing
+# model and cannot reproduce hardware-specific behavior, so it complements
+# real-GPU testing and does not replace it.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "src/**"
+      - "tests/*.cu"
+      - "tests/*.c"
+      - ".github/workflows/gpu-sim.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Tests (CUDA 13.0 and simulated H100)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install GSL
+        run: sudo apt-get update && sudo apt-get install -y libgsl-dev
+
+      - name: Set up the simulated GPU and CUDA toolkit
+        uses: pantheongpu/setup-pantheonsim@a1b9d4237411f9b2b0e0bb895b4d83377f336a7b # v0.1.9
+        with:
+          gpu: nvidia/h100
+          cuda-toolkit: "13.0"
+
+      # compute_90 embeds PTX only, which the simulator runs. The simulator
+      # needs a shared CUDA runtime.
+      - name: Build
+        working-directory: tests
+        run: |
+          gcc bessel-gsl.c -o bessel-gsl -lgsl -lm -lgslcblas
+          nvcc -arch=compute_90 -cudart shared bessel-cusl.cu -o bessel-cusl -I../src
+          nvcc -arch=compute_90 -cudart shared ran_dir_3d.cu -o ran_dir_3d -I../src -lcurand
+
+      # The tests only write data files, so the comparison is done here: the
+      # CUSL values computed on the device must match GSL (run on the CPU).
+      - name: Bessel test
+        working-directory: tests
+        shell: bash
+        run: |
+          set -o pipefail
+          ./bessel-gsl
+          vgpu run ./bessel-cusl | tee bessel.log
+          if grep -Eqi "VirtualGPU error|CUDA error|no device" bessel.log; then
+            echo "::error::the simulated GPU run reported an error"
+            exit 1
+          fi
+          python3 - <<'PY'
+          import sys
+
+          def load(name):
+              return [[float(v) for v in line.split()]
+                      for line in open(name) if line.strip() and not line.startswith("#")]
+
+          gsl = load("bessel-gsl.dat")
+          cusl = load("bessel-cuda-cusl.dat")
+          if len(gsl) != 100 or len(cusl) != len(gsl):
+              sys.exit("expected 100 rows, got GSL %d and CUSL %d" % (len(gsl), len(cusl)))
+          bad = 0
+          for i, (g, c) in enumerate(zip(gsl, cusl)):
+              for j, (a, b) in enumerate(zip(g, c)):
+                  if not abs(a - b) <= 1e-5 + 1e-6 * abs(a):
+                      print("row %d col %d: GSL %r CUSL %r" % (i, j, a, b))
+                      bad += 1
+          if bad:
+              sys.exit("%d values differ from GSL" % bad)
+          print("CUSL Bessel values match GSL (%d rows)" % len(cusl))
+          PY
+
+      # Each printed direction must be a unit vector, one line per number
+      # requested.
+      - name: Random direction test
+        working-directory: tests
+        shell: bash
+        run: |
+          set -o pipefail
+          vgpu run ./ran_dir_3d 10 1 | tee ran_dir.log
+          if grep -Eqi "VirtualGPU error|CUDA error|no device" ran_dir.log; then
+            echo "::error::the simulated GPU run reported an error"
+            exit 1
+          fi
+          test "$(grep -c '^i=' ran_dir.log)" -eq 10
+          grep '^i=' ran_dir.log | python3 -c '
+          import sys
+          for line in sys.stdin:
+              norm = float(line.split("norm=")[1])
+              if abs(norm - 1.0) > 1e-6:
+                  sys.exit("not a unit vector: " + line)
+          print("all directions have unit norm")
+          '
